@@ -7,6 +7,8 @@ import { errorHandler } from './middlewares/error-middleware.js';
 import db from './database/index.js';
 
 import router from './routers/index.js';
+
+import { authentification } from './middlewares/auth-middleware.js';
 /*----------------------------------------------- */
 const { APP_PORT } = process.env;
 
@@ -31,8 +33,13 @@ app.use((req, res, next)=>{
     
 })
 
+// Applique le middleware d'authentification à TOUTES les routes qui suivent
+app.use(authentification);
+
+// Branchement des routes principales de l'application
 app.use(router);
 
+// Middleware de gestion d'erreurs (doit toujours être placé en dernier après les routes)
 app.use(errorHandler);
 
 app.listen(APP_PORT, () => {

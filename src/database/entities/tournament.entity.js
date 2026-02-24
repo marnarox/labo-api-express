@@ -47,14 +47,6 @@ const Tournament = sequelize.define(
 			defaultValue: 'en attente de joueurs',
 			allowNull: false,
 		},
-		creationDate: {
-			type: DataTypes.DATEONLY,
-			allowNull: false,
-		},
-		updateDate: {
-			type: DataTypes.DATE,
-			allowNull: false,
-		},
 		endInscriptionDate: {
 			type: DataTypes.DATE,
 			allowNull: false,

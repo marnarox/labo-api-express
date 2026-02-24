@@ -10,7 +10,7 @@ export class NickNameAlreadyExistsError extends Error {
   statusCode = 400;
 
   constructor() {
-    super("Email already exists");
+    super("This nickname already exists");
   }
 }
 
@@ -19,5 +19,13 @@ export class InvalidCredentialsError extends Error {
 
   constructor() {
     super("Invalid credentials");
+  }
+}
+
+export class OrganizerDoesNotExist extends Error{
+  statusCode = 400;
+
+  constructor(){
+    super("only admins can create tournaments")
   }
 }

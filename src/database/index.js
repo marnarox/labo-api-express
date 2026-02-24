@@ -7,10 +7,10 @@ import Category from './entities/category.entity.js';
 
 // Tournament organized by a user
 Tournament.belongsTo(User, {
-	as: 'player',
+	as: 'organizer',
 	foreignKey: {
 		allowNull: false,
-		name: 'playerId',
+		name: 'organizerId',
 	},
 });
 
@@ -18,7 +18,7 @@ Tournament.belongsTo(User, {
 
 User.hasMany(Tournament, {
 	as: 'tournaments',
-	foreignKey: 'playerId',
+	foreignKey: 'organizerId',
 });
 /*-------------------------------------*/
 User.belongsToMany(Tournament, {

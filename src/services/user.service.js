@@ -34,36 +34,31 @@ const userService = {
 		return newUser;
 	},
 	login: async (credentials) => {
-		let credentialLog = null
-		const existingEmail = await db.User.findOne({
-			where: {
-				email: credentials.email,
-			},
-		});
+		let existingUser = null;
 
-		if (!existingEmail) {
-			throw new InvalidCredentialsError();
+		if (credentials.email) {
+			existingUser = await db.User.findOne({
+				where: { email: credentials.email },
+			});
+		} else if (credentials.nickname) {
+			existingUser = await db.User.findOne({
+				where: { nickname: credentials.nickname },
+			});
 		}
 
-		const existingNickName = await db.User.findOne({
-			where: {
-				nickname: credentials.nickname,
-			},
-		});
-		if (existingNickName) {
-			throw new NickNameAlreadyExistsError();
+		if (!existingUser) {
+			throw new InvalidCredentialsError();
 		}
 
 		const checkPassword = bcrypt.compareSync(
 			credentials.password,
-			existingEmail.password,
+			existingUser.password,
 		);
-
 		if (!checkPassword) {
 			throw new InvalidCredentialsError();
 		}
 
-		return existingEmail;
+		return existingUser;
 	},
 };
 
