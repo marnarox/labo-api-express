@@ -35,7 +35,7 @@ export const authentification = (req, res, next) => {
     next();
 };
 
-export const connected = (onlyForAdmin) => {
+export const connected = onlyForAdmin => {
   return (req, res, next) => {
     // Si l'utilisateur n'est pas identifié (pas de req.user), accès refusé
     if (!req.user) {

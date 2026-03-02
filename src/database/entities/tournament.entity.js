@@ -13,27 +13,32 @@ const Tournament = sequelize.define(
 			type: DataTypes.STRING,
 			allowNull: false,
 		},
-		place: {
+		location: {
 			type: DataTypes.STRING,
 			allowNull: true,
+			defaultValue: "En ligne",
 		},
 		playerMin: {
 			type: DataTypes.INTEGER,
 			allowNull: false,
+			defaultValue: 2
 		},
 		playerMax: {
 			type: DataTypes.INTEGER,
 			allowNull: false,
+			defaultValue: 32
 		},
 		eloMin: {
 			type: DataTypes.INTEGER,
 			allowNull: true,
+			defaultValue: 0
 		},
 		eloMax: {
 			type: DataTypes.INTEGER,
 			allowNull: true,
+			defaultValue: 3000,
 		},
-        roundNumber: {
+        currentRound: {
             type: DataTypes.INTEGER,
             defaultValue: 0,
             allowNull: false,

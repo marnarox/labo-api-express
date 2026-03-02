@@ -22,14 +22,14 @@ User.hasMany(Tournament, {
 });
 /*-------------------------------------*/
 User.belongsToMany(Tournament, {
-	through: 'User_Participate_Tournament',
-	as: 'participate',
+	through: 'User_Player_Tournament',
+	as: 'players',
 	foreignKey: 'userId',
 	otherKey: 'tournamentId',
 });
 Tournament.belongsToMany(User, {
-	through: 'User_Participate_Tournament',
-	as: 'participate',
+	through: 'User_Player_Tournament',
+	as: 'players',
 	foreignKey: 'tournamentId',
 	otherKey: 'userId',
 });
@@ -78,14 +78,14 @@ Tournament.hasMany(Match, {
 /*-------------------------------------*/
 
 Tournament.belongsToMany(Category, {
-  through: 'can_participate',
+  through: 'tournament_categories',
   foreignKey: 'tournamentId',
   otherKey: 'categoryId',
   as: 'categories',
 });
 
 Category.belongsToMany(Tournament, {
-  through: 'can_participate',
+  through: 'tournament_categories',
   foreignKey: 'categoryId',
   otherKey: 'tournamentId',
   as: 'tournaments',

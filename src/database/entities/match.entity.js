@@ -10,7 +10,7 @@ const Match = sequelize.define(
             primaryKey: true,
         },
 
-        roundNumber:{
+        currentRound:{
             type: DataTypes.INTEGER,
             allowNull: false,
         },

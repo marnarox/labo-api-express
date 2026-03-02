@@ -29,3 +29,11 @@ export class OrganizerDoesNotExist extends Error{
     super("only admins can create tournaments")
   }
 }
+
+export class UserNotFoundError extends Error {
+	statusCode = 404;
+
+	constructor() {
+		super("User not found.");
+	}
+}

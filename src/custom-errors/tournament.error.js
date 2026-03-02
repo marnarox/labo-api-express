@@ -55,3 +55,43 @@ export class TournamentAlreadyStartedError extends Error{
     super("You can't delete a tournament that already started")
   }
 }
+
+export class IsAlreadyRegisteredError extends Error{
+  statusCode = 400;
+
+  constructor(){
+    super("You are already registered here")
+  }
+}
+
+export class RegistrationClosedError extends Error{
+  statusCode = 400;
+
+  constructor(){
+    super("You cannot register anymore")
+  }
+}
+
+
+export class WrongGenderError extends Error{
+  statusCode = 400;
+
+  constructor(){
+    super("Only woman or others can register")
+  }
+}
+
+export class TournamentIsFullError extends Error{
+  statusCode = 400;
+
+  constructor(){
+    super("No more locations available")
+  }
+}
+export class EloRangeIsNotMatchingError extends Error{
+  statusCode = 400;
+
+  constructor(){
+    super("You do not match elo's condition")
+  }
+}

@@ -1,3 +1,5 @@
+
+
 import 'dotenv/config';
 import express from 'express';
 import morgan from 'morgan';
@@ -15,6 +17,7 @@ const { APP_PORT } = process.env;
 await db.sequelize.authenticate();
 await db.sequelize.sync({ alter: true });
 const app = express();
+
 
 app.use(express.static('public'));
 

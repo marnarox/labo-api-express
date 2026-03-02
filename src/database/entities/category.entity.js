@@ -14,6 +14,15 @@ const Category = sequelize.define(
 			type: DataTypes.ENUM('Junior', 'Senior', 'Veteran'),
 			allowNull: false,
 		},
+		minAge: {
+			type: DataTypes.INTEGER,
+			allowNull: false,
+			defaultValue: 0,
+		},
+		maxAge: {
+			type: DataTypes.INTEGER,
+			allowNull: true,
+		},
 	},
 	{
 		tableName: 'categories',

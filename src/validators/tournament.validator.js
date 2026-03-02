@@ -1,13 +1,35 @@
 import z from 'zod';
 
 export const creationTournamentValidator = z.object({
-name: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
-  place: z.string().optional(),
-  playerMin: z.number().int().min(2).max(32),
-  playerMax: z.number().int().min(2).max(32),
-  eloMin: z.number().int().min(0).max(3000),
-  eloMax: z.number().int().min(0).max(3000),
-  isWoman: z.boolean().default(false),
-  endInscriptionDate: z.coerce.date(),
+	name: z.string().min(3, 'Le nom doit contenir au moins 3 caractères'),
+	location: z.string().optional(),
+	playerMin: z.number().int().min(2).max(32).optional(),
+	playerMax: z.number().int().min(2).max(32).optional(),
+	eloMin: z.number().int().min(0).max(3000).optional(),
+	eloMax: z.number().int().min(0).max(3000).optional(),
+	categoryIds: z.coerce.number().int().positive().optional().catch(null),
+	isWoman: z.boolean().default(false),
+	endInscriptionDate: z.coerce.date(),
 });
 
+export const listingTounamentValidator = z.object({
+	name: z.string().optional().catch(null),
+	status: z.string().optional().catch(null),
+	categoryId: z.coerce.number().int().positive().optional().catch(null),
+	womanOnly: z
+		.preprocess((val) => {
+			if (val === 'true') return true;
+			if (val === 'false') return false;
+			return val;
+		}, z.boolean().optional())
+		.catch(null),
+	// Filtre prix min : transforme la string de l'URL en nombre (coerce)
+	fromElo: z.coerce.number().optional().catch(null),
+	// Filtre prix max
+	toElo: z.coerce.number().optional().catch(null),
+  orderByDate: z.enum(["asc", "desc"]).optional().catch("asc"),
+	// Pagination (début) : force en nombre, minimum 0, défaut 0
+	offset: z.coerce.number().min(0).default(0).catch(0),
+	// Pagination (taille) : entre 1 et 100 max, défaut 20
+	limit: z.coerce.number().min(1).max(100).default(10).catch(10),
+});
