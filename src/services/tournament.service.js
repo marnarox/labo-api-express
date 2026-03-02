@@ -10,11 +10,12 @@ import {
 	TournamentAlreadyStartedError,
 	TournamentIsFullError,
 	TournamentNotFoundError,
+	WrongCategoryError,
 	WrongGenderError,
 	YouCantDeleteThisTournamentError,
 } from '../custom-errors/tournament.error.js';
 import { Op, Sequelize } from 'sequelize';
-import { UserNotFoundError } from '../custom-errors/user.error.js';
+import { IsRegisteredError } from '../custom-errors/user.error.js';
 
 const tournamentService = {
 	create: async (data, organizerId) => {
@@ -100,7 +101,7 @@ const tournamentService = {
 
 		const promises = await tournaments.map(async (tournament) => {
 			const numberOfPlayers = await tournament.countPlayers();
-			return  numberOfPlayers ;
+			return numberOfPlayers;
 		});
 
 		const allPromises = await Promise.all(promises);
@@ -157,6 +158,7 @@ const tournamentService = {
 	},
 	register: async (tournamentId, playerId) => {
 		const tournament = await db.Tournament.findByPk(tournamentId);
+
 		if (!tournament) {
 			throw new TournamentNotFoundError();
 		}
@@ -180,23 +182,40 @@ const tournamentService = {
 			throw new TournamentIsFullError();
 		}
 		//Check si c'est reservé au femme/autres
-		// if (
-		// 	(tournament.isWoman =
-		// 		true && player.gender !== 'femme' && player.gender !== 'autre')
-		// ) {
-		// 	throw new WrongGenderError();
-		// }
+		if (tournament.isWoman && !['femme', 'autre'].includes(player.gender)) {
+			throw new WrongGenderError();
+		}
 
 		//check si notre elo fit dans la range d'elo requi
 		if (tournament.eloMin > player.elo || player.elo > tournament.eloMax) {
 			throw new EloRangeIsNotMatchingError();
 		}
+		const tournamentCategories = await tournament.getCategories();
+		const age = tournament.endInscriptionDate.diff(player.birthDate, 'year');
+		const eligibleCategory = tournamentCategories.find(
+			(c) => age >= c.minAge && (!c.maxAge || age <= c.maxAge),
+		);
+		if (!eligibleCategory) {
+			throw new WrongCategoryError();
+		}
 
-		const tournamentCategories = await tournament.getCategories()
-		console.log("🚨🚨🚨🚨🚨🚨🚨");
-		console.log(player);
-		console.log("🚨🚨🚨🚨🚨🚨🚨");
 		await tournament.addPlayers(player);
+	},
+	unsubscribe: async (tournamentId, playerId) => {
+		const tournament = await db.Tournament.findByPk(tournamentId);
+		const player = await db.User.findByPk(playerId);
+		if (!tournament) {
+			throw new TournamentNotFoundError();
+		}
+		//check si la date d'inscription n'est pas dépassé
+		if (dayjs().isAfter(dayjs(tournament.endInscriptionDate))) {
+			throw new RegistrationClosedError();
+		}
+		const isRegistered = await tournament.hasPlayers(player);
+		if (!isRegistered) {
+			throw new IsRegisteredError();
+		}
+		await tournament.removePlayers(player);
 	},
 };
 

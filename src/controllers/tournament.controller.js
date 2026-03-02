@@ -2,7 +2,7 @@ import {
 	TournamentDetailsDTO,
 	TournamentListingDTO,
 } from '../dtos/tournament.dto.js';
-import tournamentService from '../services/tournament.services.js';
+import tournamentService from '../services/tournament.service.js';
 
 const tournamentController = {
 	create: async (req, res) => {
@@ -69,10 +69,17 @@ const tournamentController = {
 	},
 	register: async (req, res) => {
 		const tournamentId = +req.params.id;
-        const playerId = req.user.id;
+		const playerId = req.user.id;
 
-        await tournamentService.register(tournamentId, playerId)
+		await tournamentService.register(tournamentId, playerId);
 
+		res.status(200).json().send();
+	},
+	unsubscribe: async (req, res) => {
+		const tournamentId = +req.params.id;
+		const playerId = req.user.id;
+
+		await tournamentService.unsubscribe(tournamentId, playerId);
 		res.status(200).json().send();
 	},
 };

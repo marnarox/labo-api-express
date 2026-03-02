@@ -30,10 +30,10 @@ export class OrganizerDoesNotExist extends Error{
   }
 }
 
-export class UserNotFoundError extends Error {
-	statusCode = 404;
+export class IsRegisteredError extends Error{
+  statusCode = 400;
 
-	constructor() {
-		super("User not found.");
-	}
+  constructor(){
+    super("You're not registered")
+  }
 }

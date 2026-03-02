@@ -95,3 +95,11 @@ export class EloRangeIsNotMatchingError extends Error{
     super("You do not match elo's condition")
   }
 }
+
+export class WrongCategoryError extends Error{
+    statusCode = 400;
+
+  constructor(){
+    super("Your age does not match any tournament category.")
+  }
+}
