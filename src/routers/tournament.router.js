@@ -13,5 +13,6 @@ tournamentRouter.delete('/:id', connected(["admin"]), tournamentController.delet
 tournamentRouter.get("/listing", queryValidator(listingTounamentValidator), tournamentController.listing)
 tournamentRouter.get("/:id", tournamentController.details);
 tournamentRouter.post("/:id/register", connected(), tournamentController.register)
-tournamentRouter.post("/:id/unsubscribe", connected(), tournamentController.unsubscribe)
+tournamentRouter.delete("/:id/unsubscribe", connected(), tournamentController.unsubscribe)
+tournamentRouter.post('/:id/start', connected(["admin"]), tournamentController.start)
 export default tournamentRouter;

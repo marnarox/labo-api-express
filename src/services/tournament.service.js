@@ -4,8 +4,11 @@ import {
 	EloRangeError,
 	EloRangeIsNotMatchingError,
 	IsAlreadyRegisteredError,
+	MatchesAlreadyExistsError,
+	MinimumPlayerRequiredError,
 	PlayerRangeError,
 	RegistrationClosedError,
+	RegistrationNotClosedError,
 	RegistrationPeriodTooShortError,
 	TournamentAlreadyStartedError,
 	TournamentIsFullError,
@@ -191,7 +194,8 @@ const tournamentService = {
 			throw new EloRangeIsNotMatchingError();
 		}
 		const tournamentCategories = await tournament.getCategories();
-		const age = tournament.endInscriptionDate.diff(player.birthDate, 'year');
+		const endInscription = dayjs(tournament.endInscriptionDat);
+		const age = endInscription.diff(player.birthDate, 'year');
 		const eligibleCategory = tournamentCategories.find(
 			(c) => age >= c.minAge && (!c.maxAge || age <= c.maxAge),
 		);
@@ -211,12 +215,91 @@ const tournamentService = {
 		if (dayjs().isAfter(dayjs(tournament.endInscriptionDate))) {
 			throw new RegistrationClosedError();
 		}
+		if (tournament.status === 'en cours') {
+			throw new TournamentAlreadyStartedError();
+		}
 		const isRegistered = await tournament.hasPlayers(player);
 		if (!isRegistered) {
 			throw new IsRegisteredError();
 		}
 		await tournament.removePlayers(player);
 	},
+start: async (tournamentId) => {
+    const tournament = await db.Tournament.findByPk(tournamentId);
+    if (!tournament) {
+        throw new TournamentNotFoundError();
+    }
+
+    const players = await tournament.getPlayers();
+    const numberOfPlayers = players.length;
+
+    if (numberOfPlayers < tournament.playerMin) {
+        throw new MinimumPlayerRequiredError();
+    }
+
+    const existingMatches = await db.Match.count({
+        where: { tournamentId },
+    });
+    if (existingMatches > 0) {
+        throw new MatchesAlreadyExistsError();
+    }
+
+    tournament.currentRound = 1;
+    tournament.status = 'en cours';
+    await tournament.save();
+
+    const generateDoubleRoundRobin = (players, tournamentId) => {
+        let pool = players.map(p => ({ id: p.dataValues?.id}));
+
+        if (pool.length % 2 !== 0) {
+            pool.push(null);
+        }
+
+        const allPlayers = pool.length;
+        const totalRounds = allPlayers - 1;
+        const matches = [];
+
+        const pivot = pool[0];
+        let rotating = pool.slice(1);
+
+        for (let round = 0; round < totalRounds; round++) {
+            const roundNumber = round + 1;
+            const returnRoundNumber = roundNumber + totalRounds;
+            const pairs = [];
+
+            pairs.push([pivot, rotating[rotating.length - 1]]);
+
+            for (let i = 0; i < (allPlayers / 2) - 1; i++) {
+                pairs.push([rotating[i], rotating[allPlayers - 2 - i]]);
+            }
+
+            for (const [p1, p2] of pairs) {
+                if (!p1 || !p2) continue;
+
+                matches.push({
+                    tournamentId,
+                    roundNumber: roundNumber,
+                    whitePlayerId: p1.id,
+                    blackPlayerId: p2.id,
+                });
+
+                matches.push({
+                    tournamentId,
+                    roundNumber: returnRoundNumber,
+                    whitePlayerId: p2.id,
+                    blackPlayerId: p1.id,
+                });
+            }
+
+            rotating.unshift(rotating.pop());
+        }
+
+        return matches;
+    };
+
+    const matches = generateDoubleRoundRobin(players, tournamentId);
+    await db.Match.bulkCreate(matches);
+},
 };
 
 export default tournamentService;

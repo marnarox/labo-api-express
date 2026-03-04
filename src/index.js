@@ -3,6 +3,7 @@
 import 'dotenv/config';
 import express from 'express';
 import morgan from 'morgan';
+import 'console-separator';
 
 import { errorHandler } from './middlewares/error-middleware.js';
 
@@ -12,6 +13,12 @@ import router from './routers/index.js';
 
 import { authentification } from './middlewares/auth-middleware.js';
 /*----------------------------------------------- */
+import { configure } from 'console-separator';
+
+configure({ 
+  char: '—',   // character to repeat
+  color: 'magenta' // red, green, yellow, brown, blue, magenta, cyan, white
+});
 const { APP_PORT } = process.env;
 
 await db.sequelize.authenticate();

@@ -63,8 +63,16 @@ export class TournamentDetailsDTO {
 		this.status = tournament.status
 		this.endInscriptionDate = tournament.endInscriptionDate
 		this.currentRound = tournament.currentRound;
-		this.categories = tournament.categories;
-		this.players = tournament.players;
+		this.categories = tournament.categories.map(category =>({
+			name: category.name,
+			minAge: category.minAge,
+			maxAge: category.maxAge,
+		}));
+		this.players = tournament.players.map(player => ({
+			nickname: player.nickname,
+			elo: player.elo,
+			gender: player.gender,
+		}));
 		this.matches = tournament.matches;
 
 	}

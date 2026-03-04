@@ -10,13 +10,14 @@ const Match = sequelize.define(
             primaryKey: true,
         },
 
-        currentRound:{
+        roundNumber:{
             type: DataTypes.INTEGER,
             allowNull: false,
         },
         result:{
-            type: DataTypes.STRING,
+            type: DataTypes.ENUM('Pas encore joué', 'Blanc', 'Noir', "Égalité"),
             allowNull: false,
+            defaultValue: "Pas encore joué"
         },
     },
     {

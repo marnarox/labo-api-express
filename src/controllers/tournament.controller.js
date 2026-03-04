@@ -82,6 +82,11 @@ const tournamentController = {
 		await tournamentService.unsubscribe(tournamentId, playerId);
 		res.status(200).json().send();
 	},
+	start: async (req, res) => {
+		const tournamentId = +req.params.id;
+		const match = await tournamentService.start(tournamentId);
+		res.status(201).json(match);
+	},
 };
 
 export default tournamentController;

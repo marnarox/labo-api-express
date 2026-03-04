@@ -52,7 +52,7 @@ export class TournamentAlreadyStartedError extends Error{
   statusCode = 400;
 
   constructor(){
-    super("You can't delete a tournament that already started")
+    super("This tournament already started")
   }
 }
 
@@ -103,3 +103,29 @@ export class WrongCategoryError extends Error{
     super("Your age does not match any tournament category.")
   }
 }
+
+export class RegistrationNotClosedError extends Error{
+    statusCode = 400;
+
+  constructor(){
+    super("Registration period is not over")
+  }
+}
+
+
+export class MinimumPlayerRequiredError extends Error{
+    statusCode = 400;
+
+  constructor(){
+    super("Minimum number of players not reached")
+  }
+}
+
+export class MatchesAlreadyExistsError extends Error{
+    statusCode = 400;
+
+  constructor(){
+    super("Matches already generated")
+  }
+}
+
