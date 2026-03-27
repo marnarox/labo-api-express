@@ -37,3 +37,10 @@ export class IsRegisteredError extends Error{
     super("You're not registered")
   }
 }
+export class MemberNotFoundError extends Error{
+  statusCode = 400;
+
+  constructor(){
+    super("Member not found")
+  }
+}

@@ -4,14 +4,14 @@ import 'dotenv/config';
 import express from 'express';
 import morgan from 'morgan';
 import 'console-separator';
-
-import { errorHandler } from './middlewares/error-middleware.js';
+import cors from "cors";
+import { errorHandler } from './middlewares/error.middleware.js';
 
 import db from './database/index.js';
 
 import router from './routers/index.js';
 
-import { authentification } from './middlewares/auth-middleware.js';
+import { authentification } from './middlewares/auth.middleware.js';
 /*----------------------------------------------- */
 import { configure } from 'console-separator';
 
@@ -24,7 +24,9 @@ const { APP_PORT } = process.env;
 await db.sequelize.authenticate();
 await db.sequelize.sync({ alter: true });
 const app = express();
-
+app.use(cors({
+    origin: "*",
+}));
 
 app.use(express.static('public'));
 
@@ -37,11 +39,6 @@ app.use(express.json());
 //permet d'avoir des logs pour les requêtes
 app.use(morgan('dev'));
 
-app.use((req, res, next)=>{
-    console.log(req.path);
-    next();
-    
-})
 
 // Applique le middleware d'authentification à TOUTES les routes qui suivent
 app.use(authentification);

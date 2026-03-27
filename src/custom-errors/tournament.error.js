@@ -128,4 +128,10 @@ export class MatchesAlreadyExistsError extends Error{
     super("Matches already generated")
   }
 }
+export class TournamentIsNotRunningError extends Error {
+	statusCode = 400;
 
+	constructor() {
+		super("Tournament is not currently running.");
+	}
+}

@@ -1,6 +1,6 @@
 import z from 'zod';
 
-export const creationTournamentValidator = z.object({
+export const createTournamentValidator = z.object({
 	name: z.string().min(3, 'Le nom doit contenir au moins 3 caractères'),
 	location: z.string().optional(),
 	playerMin: z.number().int().min(2).max(32).optional(),
@@ -12,7 +12,7 @@ export const creationTournamentValidator = z.object({
 	endInscriptionDate: z.coerce.date(),
 });
 
-export const listingTounamentValidator = z.object({
+export const getAllTournamentsValidator = z.object({
 	name: z.string().optional().catch(null),
 	status: z.string().optional().catch(null),
 	categoryId: z.coerce.number().int().positive().optional().catch(null),
@@ -32,4 +32,7 @@ export const listingTounamentValidator = z.object({
 	offset: z.coerce.number().min(0).default(0).catch(0),
 	// Pagination (taille) : entre 1 et 100 max, défaut 20
 	limit: z.coerce.number().min(1).max(100).default(10).catch(10),
+});
+export const registerTournamentValidator = z.object({
+	memberId: z.uuid(),
 });

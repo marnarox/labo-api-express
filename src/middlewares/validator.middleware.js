@@ -31,3 +31,21 @@ export const queryValidator = (dataValidator) => {
     next();
   };
 };
+export const paramValidator = dataValidator => {
+	return (req, res, next) => {
+		const { data, success, error } = dataValidator.safeParse(req.params);
+		if (!success) {
+			// Le formulaire reçu n'est pas valide
+			// gerer les erreurs
+			const { fieldErrors } = error.flatten();
+
+			res.status(400).json({
+				errors: fieldErrors,
+			});
+		} else {
+			// Le formulaire reçu est valide
+			req.params = data;
+			next();
+		}
+	};
+};

@@ -19,6 +19,8 @@ import {
 } from '../custom-errors/tournament.error.js';
 import { Op, Sequelize } from 'sequelize';
 import { IsRegisteredError } from '../custom-errors/user.error.js';
+import { MatchNotFoundError } from '../custom-errors/match.error.js';
+import Tournament from '../database/entities/tournament.entity.js';
 
 const tournamentService = {
 	create: async (data, organizerId) => {
@@ -86,7 +88,7 @@ const tournamentService = {
 		}
 
 		//
-		const tournaments = await db.Tournament.findAll({
+		let tournaments = await db.Tournament.findAll({
 			where,
 			offset: pagination.offset,
 			limit: pagination.limit,
@@ -102,16 +104,21 @@ const tournamentService = {
 			],
 		});
 
-		const promises = await tournaments.map(async (tournament) => {
-			const numberOfPlayers = await tournament.countPlayers();
-			return numberOfPlayers;
+		// const promises = await tournaments.map(async (tournament) => {
+		// 	const numberOfPlayers = await tournament.countPlayers();
+		// 	return numberOfPlayers;
+		// });
+
+		// const allPromises = await Promise.all(promises);
+		// for (let i = 0; i < allPromises.length; i++) {
+		// 	tournaments[i].nbrOfPlayers = allPromises[i];
+		// }
+
+		const nbrOfPlayersPromises = tournaments.map(async (tournament) => {
+			tournament.nbrOfPlayers = await tournament.countPlayers();
+			return tournament;
 		});
-
-		const allPromises = await Promise.all(promises);
-		for (let i = 0; i < allPromises.length; i++) {
-			tournaments[i].nbrOfPlayers = allPromises[i];
-		}
-
+		tournaments = await Promise.all(nbrOfPlayersPromises);
 		return tournaments;
 	},
 	delete: async (id, requester) => {
@@ -119,9 +126,7 @@ const tournamentService = {
 		if (!tournament) {
 			throw new TournamentNotFoundError();
 		}
-		if (requester.role !== 'admin') {
-			throw new YouCantDeleteThisTournamentError();
-		}
+
 		if (tournament.status === 'en cours') {
 			throw new TournamentAlreadyStartedError();
 		}
@@ -224,82 +229,181 @@ const tournamentService = {
 		}
 		await tournament.removePlayers(player);
 	},
-start: async (tournamentId) => {
-    const tournament = await db.Tournament.findByPk(tournamentId);
-    if (!tournament) {
-        throw new TournamentNotFoundError();
-    }
+	start: async (tournamentId) => {
+		const tournament = await db.Tournament.findByPk(tournamentId);
+		if (!tournament) {
+			throw new TournamentNotFoundError();
+		}
 
-    const players = await tournament.getPlayers();
-    const numberOfPlayers = players.length;
+		const players = await tournament.getPlayers();
+		const numberOfPlayers = players.length;
 
-    if (numberOfPlayers < tournament.playerMin) {
-        throw new MinimumPlayerRequiredError();
-    }
+		if (numberOfPlayers < tournament.playerMin) {
+			throw new MinimumPlayerRequiredError();
+		}
 
-    const existingMatches = await db.Match.count({
-        where: { tournamentId },
-    });
-    if (existingMatches > 0) {
-        throw new MatchesAlreadyExistsError();
-    }
+		const existingMatches = await db.Match.count({
+			where: { tournamentId },
+		});
+		if (existingMatches > 0) {
+			throw new MatchesAlreadyExistsError();
+		}
 
-    tournament.currentRound = 1;
-    tournament.status = 'en cours';
-    await tournament.save();
+		tournament.currentRound = 1;
+		tournament.status = 'en cours';
+		await tournament.save();
 
-    const generateDoubleRoundRobin = (players, tournamentId) => {
-        let pool = players.map(p => ({ id: p.dataValues?.id}));
+		const generateDoubleRoundRobin = (players, tournamentId) => {
+			let pool = players.map((p) => ({ id: p.dataValues?.id }));
 
-        if (pool.length % 2 !== 0) {
-            pool.push(null);
-        }
+			if (pool.length % 2 !== 0) {
+				pool.push(null);
+			}
 
-        const allPlayers = pool.length;
-        const totalRounds = allPlayers - 1;
-        const matches = [];
+			const allPlayers = pool.length;
+			const totalRounds = allPlayers - 1;
+			const matches = [];
 
-        const pivot = pool[0];
-        let rotating = pool.slice(1);
+			const pivot = pool[0];
+			let rotating = pool.slice(1);
 
-        for (let round = 0; round < totalRounds; round++) {
-            const roundNumber = round + 1;
-            const returnRoundNumber = roundNumber + totalRounds;
-            const pairs = [];
+			for (let round = 0; round < totalRounds; round++) {
+				const roundNumber = round + 1;
+				const returnRoundNumber = roundNumber + totalRounds;
+				const pairs = [];
 
-            pairs.push([pivot, rotating[rotating.length - 1]]);
+				pairs.push([pivot, rotating[rotating.length - 1]]);
 
-            for (let i = 0; i < (allPlayers / 2) - 1; i++) {
-                pairs.push([rotating[i], rotating[allPlayers - 2 - i]]);
-            }
+				for (let i = 0; i < allPlayers / 2 - 1; i++) {
+					pairs.push([rotating[i], rotating[allPlayers - 2 - i]]);
+				}
 
-            for (const [p1, p2] of pairs) {
-                if (!p1 || !p2) continue;
+				for (const [p1, p2] of pairs) {
+					if (!p1 || !p2) continue;
 
-                matches.push({
-                    tournamentId,
-                    roundNumber: roundNumber,
-                    whitePlayerId: p1.id,
-                    blackPlayerId: p2.id,
-                });
+					matches.push({
+						tournamentId,
+						roundNumber: roundNumber,
+						whitePlayerId: p1.id,
+						blackPlayerId: p2.id,
+					});
 
-                matches.push({
-                    tournamentId,
-                    roundNumber: returnRoundNumber,
-                    whitePlayerId: p2.id,
-                    blackPlayerId: p1.id,
-                });
-            }
+					matches.push({
+						tournamentId,
+						roundNumber: returnRoundNumber,
+						whitePlayerId: p2.id,
+						blackPlayerId: p1.id,
+					});
+				}
 
-            rotating.unshift(rotating.pop());
-        }
+				rotating.unshift(rotating.pop());
+			}
 
-        return matches;
-    };
+			return matches;
+		};
 
-    const matches = generateDoubleRoundRobin(players, tournamentId);
-    await db.Match.bulkCreate(matches);
-},
+		const matches = generateDoubleRoundRobin(players, tournamentId);
+		await db.Match.bulkCreate(matches);
+	},
+	encounter: async (matchId, result) => {
+		const match = await db.Match.findByPk(matchId);
+		const tournament = await match.getTournament();
+		if (!match) {
+			throw new MatchNotFoundError();
+		}
+		if (tournament.currentRound === match.roundNumber) {
+			match.result = result.result;
+			await match.save();
+			return match;
+		}
+	},
+	nextRound: async (tournamentId) => {
+		const tournament = await db.Tournament.findByPk(tournamentId);
+		const match = await tournament.getMatches();
+		console.log('🚨🚨🚨🚨🚨🚨🚨');
+		console.log(match);
+		console.log('🚨🚨🚨🚨🚨🚨🚨');
+	},
+		scoreOfPlayer: async (tournamentId, playerId) => {
+		const player = await db.Member.findByPk(playerId);
+		if (!player) {
+			throw new MemberNotFoundError();
+		}
+
+		const tournament = await db.Tournament.findByPk(tournamentId);
+		if (!tournament) {
+			throw new TournamentNotFoundError();
+		}
+
+		if (tournament.status === "waiting") {
+			throw new TournamentNotStartedError();
+		}
+
+		const score = await computePlayerScoreInATournament(
+			tournamentId,
+			playerId,
+		);
+
+		score.player = player;
+
+		return score;
+	},
+
+	allPlayersScores: async tournamentId => {
+		const tournament = await db.Tournament.findByPk(tournamentId);
+		if (!tournament) {
+			throw new TournamentNotFoundError();
+		}
+
+		if (tournament.status === "waiting") {
+			throw new TournamentNotStartedError();
+		}
+
+		const players = await tournament.getPlayers();
+		const scorePromises = players.map(async player => {
+			const score = await computePlayerScoreInATournament(
+				tournamentId,
+				player.id,
+			);
+
+			score.player = player;
+
+			return score;
+		});
+
+		const scores = await Promise.all(scorePromises);
+
+		return scores.sort((a, b) => b.score - a.score);
+	},
+
+	getRoundMatches: async (tournamentId, round = null) => {
+		const tournament = await db.Tournament.findByPk(tournamentId);
+		if (!tournament) {
+			throw new TournamentNotFoundError();
+		}
+
+		if (tournament.status === "waiting") {
+			throw new TournamentNotStartedError();
+		}
+
+		const targetRound = round || tournament.currentRound;
+
+		const matches = await tournament.getMatches({
+			where: { round: targetRound },
+			include: [
+				{
+					model: db.Member,
+					as: "whitePlayer",
+				},
+				{
+					model: db.Member,
+					as: "blackPlayer",
+				},
+			],
+		});
+
+		return { round: targetRound, matches };
+	},
 };
 
 export default tournamentService;
