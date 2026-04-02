@@ -1,3 +1,6 @@
+import { MatchListingDto } from './match.dto.js';
+import { MemberListingDto } from './user.dto.js';
+
 export class TournamentListingDTO {
 	id;
 	name;
@@ -13,77 +16,92 @@ export class TournamentListingDTO {
 	currentRound;
 	nbrOfPlayers;
 	categories;
+	limit;
+	isRegistered;
+	canRegister;
 
 	constructor(tournament) {
-
-		this.id = tournament.id
-		this.name = tournament.name
-		this.location = tournament.location
-		this.playerMin = tournament.playerMin
-		this.playerMax = tournament.playerMax
-		this.eloMin = tournament.eloMin
-		this.eloMax = tournament.eloMax
-		this.currentRound = tournament.currentRound
-		this.isWoman = tournament.isWoman
-		this.status = tournament.status
-		this.endInscriptionDate = tournament.endInscriptionDate
+		this.id = tournament.id;
+		this.name = tournament.name;
+		this.location = tournament.location;
+		this.playerMin = tournament.playerMin;
+		this.playerMax = tournament.playerMax;
+		this.eloMin = tournament.eloMin;
+		this.eloMax = tournament.eloMax;
+		this.currentRound = tournament.currentRound;
+		this.isWoman = tournament.isWoman;
+		this.status = tournament.status;
+		this.endInscriptionDate = tournament.endInscriptionDate;
 		this.currentRound = tournament.currentRound;
 		this.nbrOfPlayers = tournament.nbrOfPlayers;
-		this.categories = tournament.categories
+		this.categories = tournament.categories;
+		this.limit = tournament.limit;
+		this.isRegistered = tournament.isRegistered;
+		this.canRegister = tournament.canRegister;
 	}
 }
+export class TournamentPaginatedDTO {
+    data;
+    total;
+    limit;
+    offset;
 
-export class TournamentDetailsDTO {
+    constructor(result) {
+        this.data   = result.data.map(t => new TournamentListingDTO(t));
+        this.total  = result.total;
+        this.limit  = result.limit;
+        this.offset = result.offset;
+    }
+}
+
+export class TournamentDetailsDto {
 	id;
 	name;
 	location;
+	nbrOfPlayers;
 	playerMin;
 	playerMax;
+	categories;
 	eloMin;
 	eloMax;
-	currentRound;
-	isWoman;
 	status;
 	endInscriptionDate;
+	currentRound;
 	players;
-	categories;
-	matches;
+	isRegistered;
+	canRegister;
+	isWoman;
+	maxRound;
 
 	constructor(tournament) {
-
-		this.id = tournament.id
-		this.name = tournament.name
-		this.location = tournament.location
-		this.playerMin = tournament.playerMin
-		this.playerMax = tournament.playerMax
-		this.eloMin = tournament.eloMin
-		this.eloMax = tournament.eloMax
-		this.currentRound = tournament.currentRound
-		this.isWoman = tournament.isWoman
-		this.status = tournament.status
-		this.endInscriptionDate = tournament.endInscriptionDate
+		this.id = tournament.id;
+		this.name = tournament.name;
+		this.location = tournament.location;
+		this.nbrOfPlayers = tournament.nbrOfPlayers;
+		this.playerMin = tournament.playerMin;
+		this.playerMax = tournament.playerMax;
+		this.categories = tournament.categories.map((category) => category.name);
+		this.eloMin = tournament.eloMin;
+		this.eloMax = tournament.eloMax;
+		this.status = tournament.status;
+		this.endInscriptionDate = tournament.endInscriptionDate;
 		this.currentRound = tournament.currentRound;
-		this.categories = tournament.categories.map(category =>({
-			name: category.name,
-			minAge: category.minAge,
-			maxAge: category.maxAge,
-		}));
-		this.players = tournament.players.map(player => ({
-			nickname: player.nickname,
-			elo: player.elo,
-			gender: player.gender,
-		}));
-		this.matches = tournament.matches;
-
+		this.players = tournament.players.map(
+			(player) => new MemberListingDto(player),
+		);
+		this.isRegistered = tournament.isRegistered;
+		this.canRegister = tournament.canRegister;
+		this.isWoman = tournament.isWoman;
+		this.maxRound = tournament.maxRound;
 	}
 }
+
 export class PlayerScoreDto {
 	player;
 	score;
 	victory;
 	draw;
 	defeat;
-	bye;
 
 	constructor(score) {
 		this.player = new MemberListingDto(score.player);
@@ -91,16 +109,21 @@ export class PlayerScoreDto {
 		this.victory = score.victory;
 		this.draw = score.draw;
 		this.defeat = score.defeat;
-		this.bye = score.bye;
 	}
 }
-
 export class RoundMatchesDto {
-	round;
+	roundNumber;
 	matches;
 
-	constructor(round, matches) {
-		this.round = round;
-		this.matches = matches.map(match => new MatchListingDto(match));
+	constructor(roundNumber, matches) {
+		this.roundNumber = roundNumber;
+		this.matches = matches.map((match) => new MatchListingDto(match));
+	}
+}
+export class maxRoundDto {
+	maxRound;
+
+	constructor(maxRound) {
+		this.maxRound = maxRound;
 	}
 }

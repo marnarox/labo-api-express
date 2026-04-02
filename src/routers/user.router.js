@@ -10,7 +10,7 @@ import {
 	registerValidator,
 	updateValidator,
 } from '../validators/user.validator.js';
-import memberController from '../controllers/member.controller.js';
+import memberController from '../controllers/user.controller.js';
 import { connected } from '../middlewares/auth.middleware.js';
 
 const memberRouter = Router();

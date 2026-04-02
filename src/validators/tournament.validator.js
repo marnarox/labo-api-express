@@ -7,7 +7,7 @@ export const createTournamentValidator = z.object({
 	playerMax: z.number().int().min(2).max(32).optional(),
 	eloMin: z.number().int().min(0).max(3000).optional(),
 	eloMax: z.number().int().min(0).max(3000).optional(),
-	categoryIds: z.coerce.number().int().positive().optional().catch(null),
+	categoryIds: z.array(z.coerce.number().int().positive()).optional(),
 	isWoman: z.boolean().default(false),
 	endInscriptionDate: z.coerce.date(),
 });
@@ -31,7 +31,7 @@ export const getAllTournamentsValidator = z.object({
 	// Pagination (début) : force en nombre, minimum 0, défaut 0
 	offset: z.coerce.number().min(0).default(0).catch(0),
 	// Pagination (taille) : entre 1 et 100 max, défaut 20
-	limit: z.coerce.number().min(1).max(100).default(10).catch(10),
+	limit: z.coerce.number().min(1).max(20).default(10).catch(10),
 });
 export const registerTournamentValidator = z.object({
 	memberId: z.uuid(),

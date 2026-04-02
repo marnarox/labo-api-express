@@ -6,6 +6,7 @@ import {
 	IsAlreadyRegisteredError,
 	MatchesAlreadyExistsError,
 	MinimumPlayerRequiredError,
+	NotAllMatchesHaveAResultError,
 	PlayerRangeError,
 	RegistrationClosedError,
 	RegistrationNotClosedError,
@@ -13,6 +14,7 @@ import {
 	TournamentAlreadyStartedError,
 	TournamentIsFullError,
 	TournamentNotFoundError,
+	TournamentNotStartedError,
 	WrongCategoryError,
 	WrongGenderError,
 	YouCantDeleteThisTournamentError,
@@ -21,6 +23,12 @@ import { Op, Sequelize } from 'sequelize';
 import { IsRegisteredError } from '../custom-errors/user.error.js';
 import { MatchNotFoundError } from '../custom-errors/match.error.js';
 import Tournament from '../database/entities/tournament.entity.js';
+import { shuffle } from '../utils/array.utils.js';
+import {
+	canMemberRegisterToTournament,
+	computePlayerScoreInATournament,
+	isMemberRegisteredToTournament,
+} from '../utils/tournament.utils.js';
 
 const tournamentService = {
 	create: async (data, organizerId) => {
@@ -56,7 +64,7 @@ const tournamentService = {
 		await tournament.setCategories(categories);
 		return tournament;
 	},
-	listing: async (filter, pagination) => {
+	listing: async (filter, pagination, requester = null) => {
 		const where = {};
 
 		if (filter) {
@@ -88,11 +96,12 @@ const tournamentService = {
 		}
 
 		//
-		let tournaments = await db.Tournament.findAll({
+		let { count, rows: tournaments } = await db.Tournament.findAndCountAll({
 			where,
 			offset: pagination.offset,
 			limit: pagination.limit,
 			order,
+			distinct: true,
 			include: [
 				{
 					model: db.Category,
@@ -119,7 +128,36 @@ const tournamentService = {
 			return tournament;
 		});
 		tournaments = await Promise.all(nbrOfPlayersPromises);
-		return tournaments;
+		if (requester) {
+			// check if the user is registered to each tournament
+			const isUserRegisteredPromises = tournaments.map(async (tournament) => {
+				tournament.isRegistered = await isMemberRegisteredToTournament(
+					tournament.id,
+					requester.id,
+				);
+				return tournament;
+			});
+			tournaments = await Promise.all(isUserRegisteredPromises);
+
+			// check if the user can register to each tournament
+			const canUserRegisterPromises = tournaments.map(async (tournament) => {
+				try {
+					await canMemberRegisterToTournament(tournament.id, requester.id);
+					tournament.canRegister = true;
+				} catch (error) {
+					tournament.canRegister = false;
+				}
+				return tournament;
+			});
+			tournaments = await Promise.all(canUserRegisterPromises);
+		}
+
+		    return {
+        data: tournaments,
+        total: count,
+        limit: pagination.limit,
+        offset: pagination.offset,
+    };
 	},
 	delete: async (id, requester) => {
 		const tournament = await db.Tournament.findByPk(id);
@@ -132,7 +170,7 @@ const tournamentService = {
 		}
 		await tournament?.destroy();
 	},
-	details: async (tournamentId) => {
+	details: async (tournamentId, requester = null) => {
 		const tournament = await db.Tournament.findByPk(tournamentId, {
 			include: [
 				{
@@ -142,26 +180,30 @@ const tournamentService = {
 				{
 					model: db.User,
 					as: 'players',
-				},
-				{
-					model: db.Match,
-					as: 'matches',
-					include: [
-						{
-							model: db.User,
-							as: 'blackPlayer',
-						},
-						{
-							model: db.User,
-							as: 'whitePlayer',
-						},
-					],
+					through: { attributes: [] }, // to exclude the join table attributes
 				},
 			],
 		});
 		if (!tournament) {
 			throw new TournamentNotFoundError();
 		}
+
+		if (requester) {
+			// check if the user is registered to the tournament
+			tournament.isRegistered = await isMemberRegisteredToTournament(
+				tournamentId,
+				requester.id,
+			);
+
+			// check if the requester can register
+			try {
+				await canMemberRegisterToTournament(tournamentId, requester.id);
+				tournament.canRegister = true;
+			} catch (error) {
+				tournament.canRegister = false;
+			}
+		}
+
 		return tournament;
 	},
 	register: async (tournamentId, playerId) => {
@@ -181,9 +223,9 @@ const tournamentService = {
 			throw new IsAlreadyRegisteredError();
 		}
 		//check si la date d'inscription n'est pas dépassé
-		if (dayjs().isAfter(dayjs(tournament.endInscriptionDate))) {
-			throw new RegistrationClosedError();
-		}
+		// if (dayjs().isAfter(dayjs(tournament.endInscriptionDate))) {
+		// 	throw new RegistrationClosedError();
+		// }
 
 		//check s'il reste de la place
 		if (tournament.playerMax <= tournament.nbrOfPlayers) {
@@ -217,9 +259,9 @@ const tournamentService = {
 			throw new TournamentNotFoundError();
 		}
 		//check si la date d'inscription n'est pas dépassé
-		if (dayjs().isAfter(dayjs(tournament.endInscriptionDate))) {
-			throw new RegistrationClosedError();
-		}
+		// if (dayjs().isAfter(dayjs(tournament.endInscriptionDate))) {
+		// 	throw new RegistrationClosedError();
+		// }
 		if (tournament.status === 'en cours') {
 			throw new TournamentAlreadyStartedError();
 		}
@@ -229,81 +271,78 @@ const tournamentService = {
 		}
 		await tournament.removePlayers(player);
 	},
+	
 	start: async (tournamentId) => {
 		const tournament = await db.Tournament.findByPk(tournamentId);
 		if (!tournament) {
 			throw new TournamentNotFoundError();
 		}
 
+		// check if the tournament is already started
+		if (tournament.status !== 'en attente de joueurs') {
+			throw new TournamentAlreadyStartedError();
+		}
+
+		// check if the tournament has enough players to start
 		const players = await tournament.getPlayers();
-		const numberOfPlayers = players.length;
-
-		if (numberOfPlayers < tournament.playerMin) {
-			throw new MinimumPlayerRequiredError();
+		if (players.length < tournament.minPlayers) {
+			throw new InvalidNumberOfPlayerError();
 		}
 
-		const existingMatches = await db.Match.count({
-			where: { tournamentId },
-		});
-		if (existingMatches > 0) {
-			throw new MatchesAlreadyExistsError();
-		}
-
-		tournament.currentRound = 1;
 		tournament.status = 'en cours';
+		tournament.currentRound = 1;
+
+		// generate Round Robin matches
+
+		// shuffle players
+		shuffle(players);
+
+		// if the number of players is odd, add a dummy player for the bye
+		if (players.length % 2 === 1) {
+			players.push(null);
+		}
+
+		const n = players.length;
+		const totalRoundsPerLeg = n - 1;
+		let playerList = [...players]; // create a copy of the players array to manipulate
+		const matches = [];
+
+		// generate HOME matches
+		for (let round = 0; round < totalRoundsPerLeg; round++) {
+			for (let i = 0; i < n / 2; i++) {
+				const whitePlayer = playerList[i];
+				const blackPlayer = playerList[n - 1 - i];
+
+				if (whitePlayer && blackPlayer) {
+					matches.push({
+						tournamentId: tournament.id,
+						roundNumber: round + 1,
+						whitePlayerId: whitePlayer.id,
+						blackPlayerId: blackPlayer.id,
+					});
+				} else {
+					matches.push({
+						tournamentId: tournament.id,
+						roundNumber: round + 1,
+						whitePlayerId: whitePlayer.id,
+						blackPlayerId: null,
+					});
+				}
+			}
+			// rotate players for the next round
+			playerList.splice(1, 0, playerList.pop());
+		}
+
+		// generate the return matches and inserve the 2 players
+		const returnMatches = matches.map((match) => ({
+			tournamentId: match.tournamentId,
+			roundNumber: match.roundNumber + totalRoundsPerLeg,
+			whitePlayerId: match.blackPlayerId,
+			blackPlayerId: match.whitePlayerId,
+		}));
+
+		await db.Match.bulkCreate([...matches, ...returnMatches]);
 		await tournament.save();
-
-		const generateDoubleRoundRobin = (players, tournamentId) => {
-			let pool = players.map((p) => ({ id: p.dataValues?.id }));
-
-			if (pool.length % 2 !== 0) {
-				pool.push(null);
-			}
-
-			const allPlayers = pool.length;
-			const totalRounds = allPlayers - 1;
-			const matches = [];
-
-			const pivot = pool[0];
-			let rotating = pool.slice(1);
-
-			for (let round = 0; round < totalRounds; round++) {
-				const roundNumber = round + 1;
-				const returnRoundNumber = roundNumber + totalRounds;
-				const pairs = [];
-
-				pairs.push([pivot, rotating[rotating.length - 1]]);
-
-				for (let i = 0; i < allPlayers / 2 - 1; i++) {
-					pairs.push([rotating[i], rotating[allPlayers - 2 - i]]);
-				}
-
-				for (const [p1, p2] of pairs) {
-					if (!p1 || !p2) continue;
-
-					matches.push({
-						tournamentId,
-						roundNumber: roundNumber,
-						whitePlayerId: p1.id,
-						blackPlayerId: p2.id,
-					});
-
-					matches.push({
-						tournamentId,
-						roundNumber: returnRoundNumber,
-						whitePlayerId: p2.id,
-						blackPlayerId: p1.id,
-					});
-				}
-
-				rotating.unshift(rotating.pop());
-			}
-
-			return matches;
-		};
-
-		const matches = generateDoubleRoundRobin(players, tournamentId);
-		await db.Match.bulkCreate(matches);
 	},
 	encounter: async (matchId, result) => {
 		const match = await db.Match.findByPk(matchId);
@@ -319,12 +358,29 @@ const tournamentService = {
 	},
 	nextRound: async (tournamentId) => {
 		const tournament = await db.Tournament.findByPk(tournamentId);
-		const match = await tournament.getMatches();
-		console.log('🚨🚨🚨🚨🚨🚨🚨');
-		console.log(match);
-		console.log('🚨🚨🚨🚨🚨🚨🚨');
+		if (!tournament) {
+			throw new TournamentNotFoundError();
+		}
+
+		// check if the tournament is running (so if the status is something else than started)
+		if (tournament.status !== 'en cours') {
+			throw new TournamentAlreadyStartedError();
+		}
+
+		const matches = await tournament.getMatches({
+			where: { roundNumber: tournament.currentRound },
+		});
+
+		// check if all round has a result
+		if (matches.some((match) => match.result === null)) {
+			throw new NotAllMatchesHaveAResultError();
+		}
+
+		console.log('est ce que ça passe ?');
+		tournament.currentRound++;
+		await tournament.save();
 	},
-		scoreOfPlayer: async (tournamentId, playerId) => {
+	scoreOfPlayer: async (tournamentId, playerId) => {
 		const player = await db.Member.findByPk(playerId);
 		if (!player) {
 			throw new MemberNotFoundError();
@@ -335,32 +391,29 @@ const tournamentService = {
 			throw new TournamentNotFoundError();
 		}
 
-		if (tournament.status === "waiting") {
+		if (tournament.status === 'en attente') {
 			throw new TournamentNotStartedError();
 		}
 
-		const score = await computePlayerScoreInATournament(
-			tournamentId,
-			playerId,
-		);
+		const score = await computePlayerScoreInATournament(tournamentId, playerId);
 
 		score.player = player;
 
 		return score;
 	},
 
-	allPlayersScores: async tournamentId => {
+	allPlayersScores: async (tournamentId) => {
 		const tournament = await db.Tournament.findByPk(tournamentId);
 		if (!tournament) {
 			throw new TournamentNotFoundError();
 		}
 
-		if (tournament.status === "waiting") {
+		if (tournament.status === 'en attente') {
 			throw new TournamentNotStartedError();
 		}
 
 		const players = await tournament.getPlayers();
-		const scorePromises = players.map(async player => {
+		const scorePromises = players.map(async (player) => {
 			const score = await computePlayerScoreInATournament(
 				tournamentId,
 				player.id,
@@ -376,33 +429,47 @@ const tournamentService = {
 		return scores.sort((a, b) => b.score - a.score);
 	},
 
-	getRoundMatches: async (tournamentId, round = null) => {
+	getRoundMatches: async (tournamentId, roundNumber = null) => {
 		const tournament = await db.Tournament.findByPk(tournamentId);
 		if (!tournament) {
 			throw new TournamentNotFoundError();
 		}
 
-		if (tournament.status === "waiting") {
+		if (
+			tournament.status === 'en attente de joueurs' ||
+			tournament.status === 'en attente'
+		) {
 			throw new TournamentNotStartedError();
 		}
 
-		const targetRound = round || tournament.currentRound;
+		const targetRound = roundNumber || tournament.currentRound;
 
 		const matches = await tournament.getMatches({
-			where: { round: targetRound },
+			where: { roundNumber: targetRound },
 			include: [
 				{
-					model: db.Member,
-					as: "whitePlayer",
+					model: db.User,
+					as: 'whitePlayer',
 				},
 				{
-					model: db.Member,
-					as: "blackPlayer",
+					model: db.User,
+					as: 'blackPlayer',
 				},
 			],
 		});
 
-		return { round: targetRound, matches };
+		return { roundNumber: targetRound, matches };
+	},
+	getMaxRoundTournament: async (tournamentId) => {
+		const tournament = await db.Tournament.findByPk(tournamentId);
+		if (!tournament) {
+			throw new TournamentNotFoundError();
+		}
+		const maxScore = await db.Match.max('roundNumber', {
+			where: { tournamentId: tournamentId },
+		});
+
+		return maxScore;
 	},
 };
 

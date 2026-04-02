@@ -34,20 +34,11 @@ tournamentRouter.get(
 
 tournamentRouter.get("/:id", tournamentController.details);
 
-tournamentRouter.post(
-	"/:id/join",
-	connected(),
-	tournamentController.register,
-);
 
-tournamentRouter.post(
-	"/:id/register",
-	connected(["admin"]),
-	bodyValidator(registerTournamentValidator),
-	tournamentController.register,
-);
 
-tournamentRouter.post(
+
+
+tournamentRouter.delete(
 	"/:id/leave",
 	connected(),
 	tournamentController.unsubscribe,
@@ -59,7 +50,17 @@ tournamentRouter.post(
 	bodyValidator(registerTournamentValidator),
 	tournamentController.unsubscribe,
 );
-
+tournamentRouter.post(
+	"/:id/register",
+	connected(["admin"]),
+	bodyValidator(registerTournamentValidator),
+	tournamentController.register,
+);
+tournamentRouter.post(
+	"/:id/join",
+	connected(),
+	tournamentController.register,
+);
 tournamentRouter.post(
 	"/:id/start",
 	connected(["admin"]),
@@ -85,5 +86,7 @@ tournamentRouter.get(
 );
 
 tournamentRouter.get("/:id/round/:round", tournamentController.getRoundMatches);
+
+tournamentRouter.get("/:id/maxround" , tournamentController.getMaxRoundTournament);
 
 export default tournamentRouter;

@@ -63,21 +63,21 @@ const userService = {
 		return existingUser;
 	},
 	getById: async (id) => {
-		const member = await db.Member.findOne({ where: { id } });
+		const member = await db.User.findOne({ where: { id } });
 		if (!member) {
 			throw new MemberNotFoundError();
 		}
 		return member;
 	},
 	update: async (id, data) => {
-		const member = await db.Member.findOne({ where: { id } });
+		const member = await db.User.findOne({ where: { id } });
 		if (!member) {
 			throw new MemberNotFoundError();
 		}
 
 		if (data.email && data.email !== member.email) {
 			// check if the email already exists
-			const existingUser = await db.Member.findOne({
+			const existingUser = await db.User.findOne({
 				where: { email: data.email },
 			});
 			if (existingUser) {
@@ -85,12 +85,12 @@ const userService = {
 			}
 		}
 
-		if (data.username && data.username !== member.username) {
-			// check if username already exists
-			const existingUsername = await db.Member.findOne({
-				where: { username: data.username },
+		if (data.nickname && data.nickname !== member.nickname) {
+			// check if nickname already exists
+			const existingnickname = await db.User.findOne({
+				where: { nickname: data.nickname },
 			});
-			if (existingUsername) {
+			if (existingnickname) {
 				throw new NickNameAlreadyExistsError();
 			}
 		}
@@ -101,8 +101,8 @@ const userService = {
 	},
 	getAll: async (filter, pagination) => {
 		const where = {};
-		if (filter.username) {
-			where.username = filter.username;
+		if (filter.nickname) {
+			where.nickname = filter.nickname;
 		}
 		if (filter.email) {
 			where.email = filter.email;
@@ -121,10 +121,10 @@ const userService = {
 		if (pagination.sortBy) {
 			order.push([pagination.sortBy, pagination.sortOrder || 'ASC']);
 		} else {
-			order.push(['username', 'ASC']);
+			order.push(['nickname', 'ASC']);
 		}
 
-		const { rows: members, count } = await db.Member.findAndCountAll({
+		const { rows: members, count } = await db.User.findAndCountAll({
 			where,
 			offset: pagination.offset,
 			limit: pagination.limit,

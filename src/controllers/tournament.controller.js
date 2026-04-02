@@ -1,6 +1,10 @@
 import {
-	TournamentDetailsDTO,
+	maxRoundDto,
+	PlayerScoreDto,
+	RoundMatchesDto,
+	TournamentDetailsDto,
 	TournamentListingDTO,
+	TournamentPaginatedDTO,
 } from '../dtos/tournament.dto.js';
 import tournamentService from '../services/tournament.service.js';
 
@@ -52,19 +56,21 @@ const tournamentController = {
 			req.user,
 		);
 
-		const dtos = tournaments.map((t) => new TournamentListingDTO(t));
-
-		res.status(200).json({ data: dtos });
+		res.status(200).json(new TournamentPaginatedDTO(tournaments));
 	},
 	details: async (req, res) => {
-		const tournamentId = +req.params.id;
-		const tournament = await tournamentService.details(tournamentId);
+const tournamentId = +req.params.id;
+		const tournament = await tournamentService.details(
+			tournamentId,
+			req.user,
+		);
 
 		if (!tournament) {
-			return res.status(404).json({ message: 'Tournament not found' });
+			return res.status(404).json({ message: "Tournament not found" });
 		}
+
 		res.status(200).json({
-			data: new TournamentDetailsDTO(tournament),
+			data: new TournamentDetailsDto(tournament),
 		});
 	},
 	register: async (req, res) => {
@@ -89,12 +95,12 @@ const tournamentController = {
 	},
 	encounter: async (req, res) => {
 		const matchId = req.params.id;
-		const result = req.body
+		const result = req.body;
 		await tournamentService.encounter(matchId, result);
 
 		res.status(204).send();
 	},
-	nextRound: async(req,res)=> {
+	nextRound: async (req, res) => {
 		const tournamentId = req.params.id;
 		await tournamentService.nextRound(tournamentId);
 		res.status(204).send();
@@ -103,10 +109,7 @@ const tournamentController = {
 		const tournamentId = +req.params.id;
 		const playerId = req.params.playerId;
 
-		const score = await tournamentService.scoreOfPlayer(
-			tournamentId,
-			playerId,
-		);
+		const score = await tournamentService.scoreOfPlayer(tournamentId, playerId);
 
 		res.status(200).json({
 			data: new PlayerScoreDto(score),
@@ -119,7 +122,7 @@ const tournamentController = {
 		const scores = await tournamentService.allPlayersScores(tournamentId);
 
 		res.status(200).json({
-			data: scores.map(score => new PlayerScoreDto(score)),
+			data: scores.map((score) => new PlayerScoreDto(score)),
 		});
 	},
 
@@ -147,6 +150,11 @@ const tournamentController = {
 			data: new RoundMatchesDto(round, matches),
 		});
 	},
+	getMaxRoundTournament: async(req, res)=>{
+		const tournamentId = +req.params.id;
+		const maxRound = await tournamentService.getMaxRoundTournament(tournamentId)
+		res.status(200).json({data: new maxRoundDto(maxRound)})
+	}
 };
 
 export default tournamentController;

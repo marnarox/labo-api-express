@@ -2,7 +2,7 @@ import { Router } from "express";
 import authRouter from "./auth.router.js";
 import tournamentRouter from "./tournament.router.js";
 import matchRouter from "./match.router.js";
-import memberRouter from "./member.router.js";
+import memberRouter from "./user.router.js";
 
 const router = Router();
 
