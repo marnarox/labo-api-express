@@ -66,7 +66,7 @@ const tournamentService = {
 	},
 	listing: async (filter, pagination, requester = null) => {
 		const where = {};
-
+		const catWhere = {};
 		if (filter) {
 			if (filter.name) {
 				where.name = {
@@ -85,6 +85,9 @@ const tournamentService = {
 			}
 			if (filter.womanOnly !== undefined) {
 				where.isWoman = filter.womanOnly;
+			}
+			if (filter.category) {
+				catWhere.name = filter.category;
 			}
 		}
 
@@ -106,6 +109,8 @@ const tournamentService = {
 				{
 					model: db.Category,
 					as: 'categories',
+					where: Object.keys(catWhere).length > 0 ? catWhere : null,
+					required: Object.keys(catWhere).length > 0,
 					through: {
 						attributes: [],
 					},
@@ -152,12 +157,12 @@ const tournamentService = {
 			tournaments = await Promise.all(canUserRegisterPromises);
 		}
 
-		    return {
-        data: tournaments,
-        total: count,
-        limit: pagination.limit,
-        offset: pagination.offset,
-    };
+		return {
+			data: tournaments,
+			total: count,
+			limit: pagination.limit,
+			offset: pagination.offset,
+		};
 	},
 	delete: async (id, requester) => {
 		const tournament = await db.Tournament.findByPk(id);
@@ -271,7 +276,7 @@ const tournamentService = {
 		}
 		await tournament.removePlayers(player);
 	},
-	
+
 	start: async (tournamentId) => {
 		const tournament = await db.Tournament.findByPk(tournamentId);
 		if (!tournament) {
@@ -372,11 +377,10 @@ const tournamentService = {
 		});
 
 		// check if all round has a result
-		if (matches.some((match) => match.result === null)) {
+		if (matches.some((match) => match.result === 'Pas encore joué')) {
 			throw new NotAllMatchesHaveAResultError();
 		}
 
-		console.log('est ce que ça passe ?');
 		tournament.currentRound++;
 		await tournament.save();
 	},

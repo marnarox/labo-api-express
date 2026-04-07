@@ -15,7 +15,7 @@ export const createTournamentValidator = z.object({
 export const getAllTournamentsValidator = z.object({
 	name: z.string().optional().catch(null),
 	status: z.string().optional().catch(null),
-	categoryId: z.coerce.number().int().positive().optional().catch(null),
+	category: z.string().optional().catch(null),
 	womanOnly: z
 		.preprocess((val) => {
 			if (val === 'true') return true;
@@ -23,14 +23,10 @@ export const getAllTournamentsValidator = z.object({
 			return val;
 		}, z.boolean().optional())
 		.catch(null),
-	// Filtre prix min : transforme la string de l'URL en nombre (coerce)
 	fromElo: z.coerce.number().optional().catch(null),
-	// Filtre prix max
 	toElo: z.coerce.number().optional().catch(null),
   orderByDate: z.enum(["asc", "desc"]).optional().catch("asc"),
-	// Pagination (début) : force en nombre, minimum 0, défaut 0
 	offset: z.coerce.number().min(0).default(0).catch(0),
-	// Pagination (taille) : entre 1 et 100 max, défaut 20
 	limit: z.coerce.number().min(1).max(20).default(10).catch(10),
 });
 export const registerTournamentValidator = z.object({

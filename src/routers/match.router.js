@@ -5,10 +5,13 @@ import { bodyValidator } from "../middlewares/validator.middleware.js";
 import { setResultValidator } from "../validators/match.validator.js";
 
 const matchRouter = Router();
+
+
 matchRouter.patch(
 	"/:matchId/result",
 	connected(["admin"]),
 	bodyValidator(setResultValidator),
 	matchController.setResult,
 );
+
 export default matchRouter;

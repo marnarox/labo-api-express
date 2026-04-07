@@ -76,7 +76,7 @@ const memberController = {
 			sortOrder,
 		};
 
-		const { members, count } = await memberService.getAll(
+		const { members, count } = await userService.getAll(
 			filter,
 			pagination,
 		);

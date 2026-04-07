@@ -24,7 +24,7 @@ export const getByIdValidator = z.object({
 export const getAllValidator = z.object({
 	nickname: z.string().min(3).max(20).optional(),
 	email: z.email().optional(),
-	birthdate: z.iso.date().optional(),
+	birthDate: z.iso.date().optional(),
 	gender: z.enum(["M", "F", "O"]).optional(),
 	elo: z.number().int().min(0).max(3000).optional(),
 	page: z.number().int().min(1).optional(),

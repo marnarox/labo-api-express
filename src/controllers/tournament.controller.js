@@ -22,6 +22,7 @@ const tournamentController = {
 		res.status(204).send();
 	},
 	listing: async (req, res) => {
+
 		const {
 			name,
 			status,
@@ -29,7 +30,7 @@ const tournamentController = {
 			eloMax,
 			womanOnly,
 			hasPlaces,
-			categoryId,
+			category,
 			orderByDate,
 			limit,
 			offset,
@@ -41,7 +42,7 @@ const tournamentController = {
 			eloMax,
 			womanOnly,
 			hasPlaces,
-			categoryId,
+			category,
 		};
 		const pagination = {
 			orders: {
@@ -59,14 +60,11 @@ const tournamentController = {
 		res.status(200).json(new TournamentPaginatedDTO(tournaments));
 	},
 	details: async (req, res) => {
-const tournamentId = +req.params.id;
-		const tournament = await tournamentService.details(
-			tournamentId,
-			req.user,
-		);
+		const tournamentId = +req.params.id;
+		const tournament = await tournamentService.details(tournamentId, req.user);
 
 		if (!tournament) {
-			return res.status(404).json({ message: "Tournament not found" });
+			return res.status(404).json({ message: 'Tournament not found' });
 		}
 
 		res.status(200).json({
@@ -150,11 +148,12 @@ const tournamentId = +req.params.id;
 			data: new RoundMatchesDto(round, matches),
 		});
 	},
-	getMaxRoundTournament: async(req, res)=>{
+	getMaxRoundTournament: async (req, res) => {
 		const tournamentId = +req.params.id;
-		const maxRound = await tournamentService.getMaxRoundTournament(tournamentId)
-		res.status(200).json({data: new maxRoundDto(maxRound)})
-	}
+		const maxRound =
+			await tournamentService.getMaxRoundTournament(tournamentId);
+		res.status(200).json({ data: new maxRoundDto(maxRound) });
+	},
 };
 
 export default tournamentController;
