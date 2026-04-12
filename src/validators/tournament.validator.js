@@ -16,7 +16,7 @@ export const getAllTournamentsValidator = z.object({
 	name: z.string().optional().catch(null),
 	status: z.string().optional().catch(null),
 	category: z.string().optional().catch(null),
-	womanOnly: z
+	isWoman: z
 		.preprocess((val) => {
 			if (val === 'true') return true;
 			if (val === 'false') return false;

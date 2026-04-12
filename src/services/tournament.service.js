@@ -67,6 +67,9 @@ const tournamentService = {
 	listing: async (filter, pagination, requester = null) => {
 		const where = {};
 		const catWhere = {};
+		console.log("🚨🚨🚨🚨🚨🚨🚨");
+		console.log(filter);
+		console.log("🚨🚨🚨🚨🚨🚨🚨");
 		if (filter) {
 			if (filter.name) {
 				where.name = {
@@ -83,8 +86,8 @@ const tournamentService = {
 			if (filter.maxElo) {
 				where.eloMax = { [Op.lte]: filter.maxElo };
 			}
-			if (filter.womanOnly !== undefined) {
-				where.isWoman = filter.womanOnly;
+			if (filter.isWoman !== undefined) {
+				where.isWoman = filter.isWoman;
 			}
 			if (filter.category) {
 				catWhere.name = filter.category;

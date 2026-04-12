@@ -28,7 +28,7 @@ const tournamentController = {
 			status,
 			eloMin,
 			eloMax,
-			womanOnly,
+			isWoman,
 			hasPlaces,
 			category,
 			orderByDate,
@@ -40,7 +40,7 @@ const tournamentController = {
 			status,
 			eloMin,
 			eloMax,
-			womanOnly,
+			isWoman,
 			hasPlaces,
 			category,
 		};
