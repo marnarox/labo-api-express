@@ -11,6 +11,7 @@ export class TournamentListingDTO {
 	eloMax;
 	currentRound;
 	isWoman;
+	fitElo;
 	status;
 	endInscriptionDate;
 	currentRound;
@@ -28,6 +29,7 @@ export class TournamentListingDTO {
 		this.playerMax = tournament.playerMax;
 		this.eloMin = tournament.eloMin;
 		this.eloMax = tournament.eloMax;
+		this.fitElo = tournament.fitElo;
 		this.currentRound = tournament.currentRound;
 		this.isWoman = tournament.isWoman;
 		this.status = tournament.status;

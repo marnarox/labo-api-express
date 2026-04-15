@@ -34,6 +34,7 @@ const tournamentController = {
 			orderByDate,
 			limit,
 			offset,
+			fitElo,
 		} = req.validatedQuery;
 		const filter = {
 			name,
@@ -43,6 +44,7 @@ const tournamentController = {
 			isWoman,
 			hasPlaces,
 			category,
+			fitElo,
 		};
 		const pagination = {
 			orders: {

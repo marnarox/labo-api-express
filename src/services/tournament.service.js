@@ -89,8 +89,31 @@ const tournamentService = {
 			if (filter.isWoman !== undefined) {
 				where.isWoman = filter.isWoman;
 			}
+			
 			if (filter.category) {
 				catWhere.name = filter.category;
+			}
+			if (filter.fitElo) {
+				if (filter.fitElo && !where.minElo && !where.maxElo) {
+					where.minElo = { [Op.lte]: filter.fitElo };
+					where.maxElo = { [Op.gte]: filter.fitElo };
+				} else {
+					const fitEloAnd = [
+						{
+							minElo: { [Op.lte]: filter.fitElo },
+							maxElo: { [Op.gte]: filter.fitElo },
+						},
+					];
+					if (where.minElo) {
+						fitEloAnd.push({ minElo: where.minElo });
+						delete where.minElo;
+					}
+					if (where.maxElo) {
+						fitEloAnd.push({ maxElo: where.maxElo });
+						delete where.maxElo;
+					}
+					where[Op.and] = fitEloAnd;
+				}
 			}
 		}
 
