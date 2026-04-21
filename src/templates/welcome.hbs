@@ -1,0 +1,54 @@
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>{{subject}}</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				background-color: #f4f4f4;
+				padding: 20px;
+			}
+			.container {
+				background-color: #fff;
+				padding: 20px;
+				border-radius: 8px;
+				max-width: 600px;
+				margin: auto;
+			}
+			.header {
+				color: #333;
+				font-size: 24px;
+				margin-bottom: 20px;
+			}
+			.content {
+				color: #555;
+				line-height: 1.6;
+			}
+			.button {
+				display: inline-block;
+				padding: 10px 20px;
+				background-color: #007bff;
+				color: white;
+				text-decoration: none;
+				border-radius: 4px;
+				margin-top: 20px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				Welcome,
+				{{username}}!
+			</div>
+			<div class="content">
+				<p>Thank you for joining Checkmate. We are excited to have you
+					on board!</p>
+				<p>To get started, please explore the dashboard by clicking the
+					button below:</p>
+				<!-- Injecting variables using double handlebars -->
+				<a href="{{loginUrl}}" class="button">Log In to Your Account</a>
+			</div>
+		</div>
+	</body>
+</html>
