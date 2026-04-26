@@ -1,0 +1,22 @@
+export const userData = [
+  { email: "admin@chesslab.com", nickname: "GrandMaster_Admin", password: "007", gender: "homme", birthDate: "1985-05-12", elo: 2800, role: "admin" },
+  { email: "clara.chess@gmail.com", nickname: "QueenGambit", password: "007", gender: "femme", birthDate: "1998-11-20", elo: 2150, role: "member" },
+  { email: "lucas.dev@outlook.fr", nickname: "CodeAndCheck", password: "007", gender: "homme", birthDate: "1995-03-15", elo: 1200, role: "member" },
+  { email: "alex.nonbinary@io.com", nickname: "PixelBishop", password: "007", gender: "autre", birthDate: "2002-07-08", elo: 950, role: "member" },
+  { email: "sophie.v@yahoo.be", nickname: "Starlight_Player", password: "007", gender: "femme", birthDate: "1992-09-30", elo: 1850, role: "member" },
+  { email: "vieux.sage@free.fr", nickname: "OldSchoolPlayer", password: "007", gender: "homme", birthDate: "1955-01-10", elo: 2300, role: "member" },
+  { email: "junior.pro@labo.com", nickname: "SpeedyGonzales", password: "007", gender: "homme", birthDate: "2010-06-25", elo: 1450, role: "member" },
+  { email: "elisa.smart@gmail.com", nickname: "SmartMove", password: "007", gender: "femme", birthDate: "2005-12-02", elo: 1100, role: "member" },
+  { email: "iron.man@stark.com", nickname: "IronCheck", password: "007", gender: "homme", birthDate: "1970-04-18", elo: 1750, role: "member" },
+  { email: "moderator@labo.com", nickname: "ShieldMod", password: "007", gender: "autre", birthDate: "1988-10-10", elo: 2000, role: "admin" },
+  { email: "lea.joueuse@outlook.com", nickname: "ChessLady", password: "007", gender: "femme", birthDate: "1997-02-14", elo: 1600, role: "member" },
+  { email: "marc.durand@free.fr", nickname: "TheTank", password: "007", gender: "homme", birthDate: "1982-11-05", elo: 1320, role: "member" },
+  { email: "nina.p@gmail.com", nickname: "SilentAssassin", password: "007", gender: "femme", birthDate: "2001-08-22", elo: 2450, role: "member" },
+  { email: "pablo.escobar@cartel.co", nickname: "KingPin", password: "007", gender: "homme", birthDate: "1990-12-01", elo: 800, role: "member" },
+  { email: "sam.dev@company.org", nickname: "BugHunter", password: "007", gender: "autre", birthDate: "1994-05-25", elo: 1250, role: "member" },
+  { email: "victor.v@skynet.be", nickname: "Terminator", password: "007", gender: "homme", birthDate: "1984-07-04", elo: 2100, role: "member" },
+  { email: "julie.chess@gmail.com", nickname: "DeepBlueGirl", password: "007", gender: "femme", birthDate: "2003-03-12", elo: 1950, role: "member" },
+  { email: "vincenzo@mafia.it", nickname: "TheDon", password: "007", gender: "homme", birthDate: "1965-02-28", elo: 1650, role: "member" },
+  { email: "fiona.m@outlook.ie", nickname: "CelticKnight", password: "007", gender: "femme", birthDate: "1996-10-10", elo: 1400, role: "member" },
+  { email: "marnarox@test.com", nickname: "MarnaroxDev", password: "007", gender: "homme", birthDate: "2001-08-27", elo: 1500, role: "admin" }
+];
